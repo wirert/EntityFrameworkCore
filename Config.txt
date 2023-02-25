@@ -2,3 +2,5 @@ Server=.;Database=MinionsDB;TrustServerCertificate=True;User Id=sa;Password=AsDf
 
 
 scaffold-dbcontext 'Server=.;Database=SoftUni;TrustServerCertificate=True;UserId=sa;Password=AsDf23SQLServer' Microsoft.EntityFrameworkCore.SQLServer -DataAnnotations -ContextDir Data -OutputDir Models
+
+add-migration InitialMigration
