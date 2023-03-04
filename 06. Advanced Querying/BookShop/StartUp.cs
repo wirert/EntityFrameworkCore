@@ -15,7 +15,7 @@
             using var db = new BookShopContext();
             DbInitializer.ResetDatabase(db);
 
-            Console.WriteLine(GetBooksReleasedBefore(db, "12-04-1992"));
+            Console.WriteLine(CountBooks(db, 12));
         }
 
         // 02. Age Restriction
@@ -104,6 +104,57 @@
                 .ToArray();
 
             return string.Join(Environment.NewLine, books);
+        }
+
+        //08. Author Search
+        public static string GetAuthorNamesEndingIn(BookShopContext context, string input)
+        {
+            int inputLength = input.Length;
+
+            var authors = context.Authors
+                .AsNoTracking()
+                .Where(a => a.FirstName.EndsWith(input))
+                .Select(a => a.FirstName + " " + a.LastName)
+                .OrderBy(a => a)
+                .ToArray();
+
+            return string.Join (Environment.NewLine, authors);
+        }
+
+        //09. Book Search
+        public static string GetBookTitlesContaining(BookShopContext context, string input)
+        {
+            var books = context.Books
+                .AsNoTracking()
+                .Where(b => b.Title.ToLower().Contains(input.ToLower()))
+                .Select(b => b.Title)
+                .OrderBy(b => b) 
+                .ToArray();
+
+            return string.Join(Environment.NewLine, books);
+        }
+
+        //10. Book Search by Author
+        public static string GetBooksByAuthor(BookShopContext context, string input)
+        {
+            var books = context.Books
+                .Include(b => b.Author)                
+                .AsNoTracking()
+                .Where(b =>b.Author.LastName.ToLower().StartsWith(input.ToLower()))
+                .OrderBy(b => b.BookId)
+                .Select(b => $"{b.Title} ({b.Author.FirstName} {b.Author.LastName})")
+                .ToArray();
+
+            return string.Join(Environment.NewLine, books);
+        }
+
+        //11. Count Books
+        public static int CountBooks(BookShopContext context, int lengthCheck)
+        {
+            return context.Books
+                .AsNoTracking()
+                .Where(b => b.Title.Length > lengthCheck)
+                .Count();
         }
 
     }
