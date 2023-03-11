@@ -18,7 +18,7 @@
         public DateTime DateTime { get; set; }
 
         [Required]
-        public OrderType Type { get; set; }
+        public OrderType Type { get; set; } = OrderType.ForHere;
 
         [NotMapped]
         public decimal TotalPrice { get; set; }

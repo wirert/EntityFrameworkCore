@@ -23,14 +23,12 @@
             var order = new Order
             {
                 Customer = entityDto.Customer,
-                DateTime = DateTime.UtcNow,
-                Type = FastFood.Models.Enums.OrderType.ForHere,
+                DateTime = DateTime.UtcNow,                
                 EmployeeId = entityDto.EmployeeId
             };
 
             order.OrderItems.Add(new OrderItem
-            {
-                OrderId = order.Id,
+            {                
                 Quantity = entityDto.Quantity,
                 ItemId = entityDto.ItemId
             });

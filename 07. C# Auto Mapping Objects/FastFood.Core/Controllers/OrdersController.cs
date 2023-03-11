@@ -1,13 +1,10 @@
 ﻿namespace FastFood.Core.Controllers
 {
-    using System;
-    using System.Linq;
     using AutoMapper;
-    using Data;
-    using FastFood.Services.Interfaces;
-    using FastFood.Services.Models.Items;
-    using FastFood.Services.Models.Orders;
     using Microsoft.AspNetCore.Mvc;
+
+    using FastFood.Services.Interfaces;
+    using FastFood.Services.Models.Orders;
     using ViewModels.Orders;
 
     public class OrdersController : Controller
