@@ -204,7 +204,7 @@
 
             var categories = context.Categories
                 .AsNoTracking()
-                .Select (c => new
+                .Select(c => new
                 {
                     c.Name,
                     RecentBooks = c.CategoryBooks
@@ -218,7 +218,7 @@
             foreach (var c in categories)
             {
                 sb.AppendLine($"--{c.Name}")
-                    .AppendLine(string.Join(Environment.NewLine, c.RecentBooks));                
+                    .AppendLine(string.Join(Environment.NewLine, c.RecentBooks));
             }
 
             return sb.ToString().TrimEnd();
@@ -228,7 +228,7 @@
         public static void IncreasePrices(BookShopContext context)
         {
             var books = context.Books
-                .Where(b => b.ReleaseDate.Value.Year < 2010)                
+                .Where(b => b.ReleaseDate.Value.Year < 2010)
                 .ToArray();
 
             foreach (var b in books)
@@ -247,13 +247,12 @@
 
             int removedBooks = books.Count();
 
-             context.Books.RemoveRange(books);
+            context.Books.RemoveRange(books);
 
             context.SaveChanges();
 
             return removedBooks;
         }
-
     }
 }
 
