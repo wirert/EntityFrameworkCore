@@ -5,6 +5,9 @@ using Newtonsoft.Json;
 using ProductShop.Data;
 using ProductShop.Models;
 using ProductShop.DTOs.Import;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using ProductShop.DTOs.Export;
 
 namespace ProductShop
 {
@@ -17,15 +20,24 @@ namespace ProductShop
 
             //dbContext.Database.EnsureDeleted();
             //dbContext.Database.EnsureCreated();
-
+           
             //Console.WriteLine(ImportUsers(dbContext, File.ReadAllText("../../../Datasets/users.json")));
             //Console.WriteLine(ImportProducts(dbContext, File.ReadAllText("../../../Datasets/products.json")));
             //Console.WriteLine(ImportCategories(dbContext, File.ReadAllText("../../../Datasets/categories.json")));
-            Console.WriteLine(ImportCategoryProducts(dbContext, File.ReadAllText("../../../Datasets/categories-products.json")));
+            //Console.WriteLine(ImportCategoryProducts(dbContext, File.ReadAllText("../../../Datasets/categories-products.json")));
+
+            string result = GetProductsInRange(dbContext);
+
+            WriteJsonToFile("products-in-range.json", result);
         }
 
         private static string GetJson(string inputJsonFilename)
             => File.ReadAllText($"../../../Datasets/{inputJsonFilename}");
+
+        private static void WriteJsonToFile(string fileName, string json)
+        {
+            File.WriteAllText($"../../../Results/{fileName}", json);
+        }
 
         private static bool IsValid(object obj)
         {
@@ -82,15 +94,29 @@ namespace ProductShop
             var categoriesDtos = JsonConvert.DeserializeObject<List<ImportCategoryDto>>(inputJson, new JsonSerializerSettings()
             {
                NullValueHandling = NullValueHandling.Ignore
-            });           
+            });
 
-            var categories = categoriesDtos
-                .Where(c => c.Name != null)
-                .Select(c => new Category
+            var categories = new List<Category>();
+
+            foreach (var category in categoriesDtos)
             {
-                Name = c.Name
-            })
-                .ToList();
+                if (!IsValid(category))
+                {
+                    continue;
+                }
+
+                categories.Add(new Category
+                {
+                    Name = category.Name
+                });
+            }
+            //var categories = categoriesDtos
+            //    //.Where(c => c.Name != null)
+            //    .Select(c => new Category
+            //{
+            //    Name = c.Name
+            //})
+            //    .ToList();
 
             context.AddRange(categories);
             context.SaveChanges();
@@ -117,6 +143,22 @@ namespace ProductShop
             context.SaveChanges();
 
             return $"Successfully imported {categoryProducts.Count}";
+        }
+
+        //05. Export Products In Range
+        public static string GetProductsInRange(ProductShopContext context)
+        {
+            var mapper = new Mapper(new MapperConfiguration(cfg => cfg.AddProfile<ProductShopProfile>()));
+
+            var productsDtos = context.Products
+                .Where(p => p.Price >= 500 && p.Price <= 1000)
+                .OrderBy(p => p.Price)
+                .ProjectTo<ExportProductDto>(mapper.ConfigurationProvider)
+                .ToList();
+
+            var result = JsonConvert.SerializeObject(productsDtos, Formatting.Indented);
+
+            return result;
         }
 
 

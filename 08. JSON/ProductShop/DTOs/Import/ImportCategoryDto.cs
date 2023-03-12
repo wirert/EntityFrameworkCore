@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 
 namespace ProductShop.DTOs.Import
@@ -7,6 +8,7 @@ namespace ProductShop.DTOs.Import
     public class ImportCategoryDto
     {
         [NotNull]
+        [Required]
         public string Name { get; set; } = null!;
     }
 }
