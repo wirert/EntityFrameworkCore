@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/08. JSON/ProductShop.Test
+/08. JSON/ProductShop/DTOs.zip
+*.zip
