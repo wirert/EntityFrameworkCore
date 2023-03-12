@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <Folder Include="DTOs\Export\" />
+    <Folder Include="Services\" />
     <Folder Include="Results\" />
   </ItemGroup>
 
