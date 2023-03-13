@@ -1,4 +1,7 @@
-﻿namespace CarDealer.Models
+﻿
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace CarDealer.Models
 {
     public class Car
     {
@@ -9,6 +12,9 @@
         public string Model { get; set; } = null!;
 
         public long TravelledDistance { get; set; }
+
+        [NotMapped]
+        public decimal Price => this.PartsCars.Sum(cp => cp.Part.Price);
 
         public ICollection<Sale> Sales { get; set; } = new List<Sale>();    
 
