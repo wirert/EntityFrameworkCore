@@ -1,9 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using AutoMapper;
 using Newtonsoft.Json;
+//using System.Text.Json;
 using CarDealer.Data;
 using CarDealer.DTOs.Import;
 using CarDealer.Models;
+using CarDealer.DTOs.Export;
+using System.Globalization;
 
 namespace CarDealer
 {
@@ -14,6 +17,8 @@ namespace CarDealer
             var context = new CarDealerContext();
 
             CreateAndSeedDb(context);
+
+            WriteJsonToFile("toyota-cars.json", GetCarsFromMakeToyota(context));
         }
 
         private static void CreateAndSeedDb(CarDealerContext context)
@@ -30,6 +35,9 @@ namespace CarDealer
 
         private static string GetJsonFromFile(string fileName)
                  => File.ReadAllText($"../../../Datasets/{fileName}");
+
+        private static void WriteJsonToFile(string fileName, string text)
+                 => File.WriteAllText($"../../../Results/{fileName}", text);
 
         private static Mapper NewMapper()
             => new Mapper(new MapperConfiguration(cfg => cfg.AddProfile<CarDealerProfile>()));
@@ -91,7 +99,7 @@ namespace CarDealer
             })
                 .ToList();
 
-            context.AddRange(parts); 
+            context.AddRange(parts);
             context.SaveChanges();
 
             return $"Successfully imported {parts.Count}.";
@@ -106,7 +114,7 @@ namespace CarDealer
             {
                 Make = c.Make,
                 Model = c.Model,
-                TravelledDistance = c.TravelledDistance,
+                TraveledDistance = c.TraveledDistance,
                 PartsCars = c.PartsId.Distinct().Select(i => new PartCar
                 {
                     PartId = i
@@ -149,7 +157,7 @@ namespace CarDealer
             var sales = saleDtos
                 //.Where(s => context.Customers.Find( s.CustomerId) != null 
                 //        && context.Cars.Find(s.CarId) != null)
-                .Select(c => new Sale 
+                .Select(c => new Sale
                 {
                     CustomerId = c.CustomerId,
                     CarId = c.CarId,
@@ -162,6 +170,43 @@ namespace CarDealer
 
             return $"Successfully imported {sales.Count}.";
         }
+
+        //14. Export Ordered Customers
+        public static string GetOrderedCustomers(CarDealerContext context)
+        {
+            var result = context.Customers
+                .OrderBy(c => c.BirthDate.Date)
+                .ThenBy(c => c.IsYoungDriver)
+                .Select(c => new OrderedCustomerDto
+                {
+                    Name = c.Name,
+                    BirthDate = c.BirthDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture),
+                    IsYoungDriver = c.IsYoungDriver
+                })
+                .ToArray();
+
+            return JsonConvert.SerializeObject(result, Formatting.Indented);
+        }
+
+        // 15. Export Cars From Make Toyota
+        public static string GetCarsFromMakeToyota(CarDealerContext context)
+        {
+            var result = context.Cars
+                .Where(c => c.Make == "Toyota")
+                .OrderBy(c => c.Model)
+                .ThenByDescending(c => c.TraveledDistance)
+                .Select(c => new
+                {
+                    Id = c.Id,
+                    Make = c.Make,
+                    Model = c.Model,
+                    TraveledDistance = c.TraveledDistance
+                })
+                .ToArray();
+
+            return JsonConvert.SerializeObject (result, Formatting.Indented);
+        }
+
 
     }
 }

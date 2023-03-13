@@ -11,7 +11,7 @@ namespace CarDealer.Models
 
         public string Model { get; set; } = null!;
 
-        public long TravelledDistance { get; set; }
+        public long TraveledDistance { get; set; }
 
         [NotMapped]
         public decimal Price => this.PartsCars.Sum(cp => cp.Part.Price);
