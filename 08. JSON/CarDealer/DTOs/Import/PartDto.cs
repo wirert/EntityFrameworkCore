@@ -1,12 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
-namespace CarDealer.Models
+namespace CarDealer.DTOs.Import
 {
-    public class Part
+    public class PartDto
     {
-        public int Id { get; set; }
-
         [Required]
         public string Name { get; set; } = null!;
 
@@ -18,9 +15,5 @@ namespace CarDealer.Models
 
         [Required]
         public int SupplierId { get; set; }
-        [ForeignKey(nameof(SupplierId))]
-        public Supplier Supplier { get; set; } = null!;
-
-        public ICollection<PartCar> PartsCars { get; set; } = new List<PartCar>();
     }
 }

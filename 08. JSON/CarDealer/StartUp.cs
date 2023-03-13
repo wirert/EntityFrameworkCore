@@ -1,9 +1,9 @@
-﻿using AutoMapper;
+﻿using System.ComponentModel.DataAnnotations;
+using AutoMapper;
+using Newtonsoft.Json;
 using CarDealer.Data;
 using CarDealer.DTOs.Import;
 using CarDealer.Models;
-using Newtonsoft.Json;
-using System.ComponentModel.DataAnnotations;
 
 namespace CarDealer
 {
@@ -22,6 +22,10 @@ namespace CarDealer
             context.Database.EnsureCreated();
 
             Console.WriteLine(ImportSuppliers(context, GetJsonFromFile("suppliers.json")));
+            Console.WriteLine(ImportParts(context, GetJsonFromFile("parts.json")));
+            Console.WriteLine(ImportCars(context, GetJsonFromFile("cars.json")));
+            Console.WriteLine(ImportCustomers(context, GetJsonFromFile("customers.json")));
+            Console.WriteLine(ImportSales(context, GetJsonFromFile("sales.json")));
         }
 
         private static string GetJsonFromFile(string fileName)
@@ -59,8 +63,105 @@ namespace CarDealer
             return $"Successfully imported {suppliers.Count}.";
         }
 
-       
+        //10. Import Parts
+        public static string ImportParts(CarDealerContext context, string inputJson)
+        {
+            var mapper = NewMapper();
 
+            var partDtos = JsonConvert.DeserializeObject<List<PartDto>>(inputJson)
+                .Where(p => context.Suppliers.Find(p.SupplierId) != null);
+
+            //var parts = new List<Part>();
+            //foreach (var pDto in partDtos)
+            //{
+            //    if (!IsValid(pDto))
+            //    {
+            //        continue;
+            //    }
+
+            //    parts.Add(mapper.Map<Part>(pDto));
+            //}
+
+            var parts = partDtos.Select(p => new Part
+            {
+                Name = p.Name,
+                Price = p.Price,
+                Quantity = p.Quantity,
+                SupplierId = p.SupplierId
+            })
+                .ToList();
+
+            context.AddRange(parts); 
+            context.SaveChanges();
+
+            return $"Successfully imported {parts.Count}.";
+        }
+
+        //11. Import Cars
+        public static string ImportCars(CarDealerContext context, string inputJson)
+        {
+            var carDtos = JsonConvert.DeserializeObject<List<CarDto>>(inputJson);
+
+            var cars = carDtos.Select(c => new Car
+            {
+                Make = c.Make,
+                Model = c.Model,
+                TravelledDistance = c.TravelledDistance,
+                PartsCars = c.PartsId.Distinct().Select(i => new PartCar
+                {
+                    PartId = i
+                })
+                .ToArray()
+            })
+                .ToList();
+
+            context.AddRange(cars);
+            context.SaveChanges();
+
+            return $"Successfully imported {cars.Count}.";
+        }
+
+        //12. Import Customers
+        public static string ImportCustomers(CarDealerContext context, string inputJson)
+        {
+            var mapper = NewMapper();
+
+            var cDtos = JsonConvert.DeserializeObject<List<CustomerDto>>(inputJson);
+
+            var customers = new List<Customer>();
+
+            foreach (var cDto in cDtos)
+            {
+                customers.Add(mapper.Map<Customer>(cDto));
+            }
+
+            context.AddRange(customers);
+            context.SaveChanges();
+
+            return $"Successfully imported {customers.Count}.";
+        }
+
+        //13. Import Sales
+        public static string ImportSales(CarDealerContext context, string inputJson)
+        {
+            var saleDtos = JsonConvert.DeserializeObject<List<SaleDto>>(inputJson);
+
+            var sales = saleDtos
+                //.Where(s => context.Customers.Find( s.CustomerId) != null 
+                //        && context.Cars.Find(s.CarId) != null)
+                .Select(c => new Sale 
+                {
+                    CustomerId = c.CustomerId,
+                    CarId = c.CarId,
+                    Discount = c.Discount
+                })
+                .ToList();
+
+            context.AddRange(sales);
+            context.SaveChanges();
+
+            return $"Successfully imported {sales.Count}.";
+        }
 
     }
 }
