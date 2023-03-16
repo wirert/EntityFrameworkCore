@@ -1,13 +1,15 @@
-﻿using AutoMapper;
+﻿using System.Xml.Serialization;
+
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+
 using ProductShop.Data;
 using ProductShop.DTOs.Export;
 using ProductShop.DTOs.Export.CategoriesByProducts;
 using ProductShop.DTOs.Export.SoldProducts;
+using ProductShop.DTOs.Export.UsersAndProducts;
 using ProductShop.DTOs.Import;
 using ProductShop.Models;
-using System.Xml;
-using System.Xml.Serialization;
 
 namespace ProductShop
 {
@@ -19,7 +21,7 @@ namespace ProductShop
 
             //CreateAndSeedDb(context);
 
-            File.WriteAllText(GetExportPath("categories-by-products.xml"), GetCategoriesByProductsCount(context));
+            File.WriteAllText(GetExportPath("users-and-products.xml"), GetUsersWithProducts(context));
         }
 
         private static string GetExportPath(string fileName)
@@ -230,6 +232,46 @@ namespace ProductShop
             return writer.ToString();
         }
 
+        //08. Export Users and Products
+        public static string GetUsersWithProducts(ProductShopContext context)
+        {
+            var usersWithProducts = new UserCountDto
+            {
+                Count = context.Users.Count(u => u.ProductsSold.Any()),
+                Users = context.Users
+                    .Where(u => u.ProductsSold.Any())
+                    .OrderByDescending(u => u.ProductsSold.Count)
+                    .Select(u => new UserProductsDto
+                    {
+                        FirstName = u.FirstName,
+                        LastName = u.LastName,
+                        Age = u.Age,
+                        ProductsSold = new SoldProductsDto
+                        {
+                            Count = u.ProductsSold.Count,
+                            Products = u.ProductsSold.Select(p => new ProductUserDto
+                            {
+                                Name = p.Name,
+                                Price = p.Price
+                            })
+                            .OrderByDescending(p => p.Price)
+                            .ToArray()
+                        }
+                    })
+                    .Take(10)
+                    .ToArray()
+            };            
 
+            var namespaces = new XmlSerializerNamespaces();
+            namespaces.Add(string.Empty, null);
+
+            var serializer = new XmlSerializer(typeof(UserCountDto), new XmlRootAttribute("Users"));
+
+            using var writer = new StringWriter();
+
+            serializer.Serialize(writer, usersWithProducts, namespaces);
+
+            return writer.ToString();
+        }
     }
 }
