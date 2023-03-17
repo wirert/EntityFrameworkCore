@@ -1,5 +1,4 @@
-﻿using CarDealer.Models;
-using System.Xml.Serialization;
+﻿using System.Xml.Serialization;
 
 namespace CarDealer.DTOs.Import
 {

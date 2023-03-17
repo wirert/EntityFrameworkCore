@@ -1,7 +1,12 @@
-﻿using CarDealer.Data;
+﻿using System.Xml.Serialization;
+
+using CarDealer.Data;
+using CarDealer.DTOs.Export.BMWCars;
+using CarDealer.DTOs.Export.CarsWithDistance;
+using CarDealer.DTOs.Export.LocalSuppliers;
 using CarDealer.DTOs.Import;
 using CarDealer.Models;
-using System.Xml.Serialization;
+using Microsoft.EntityFrameworkCore.Update;
 
 namespace CarDealer
 {
@@ -11,7 +16,11 @@ namespace CarDealer
         {
             var context = new CarDealerContext();
 
-            ResetAndSeedDb(context);
+            //ResetAndSeedDb(context);
+
+            string resultXml = GetLocalSuppliers(context);
+
+            WriteXmlToFile(resultXml, "local-suppliers.xml");
         }
 
         private static void ResetAndSeedDb(CarDealerContext context)
@@ -29,6 +38,9 @@ namespace CarDealer
 
         private static string ReadXml(string fileName)
             => File.ReadAllText($"../../../Datasets/{fileName}");
+
+        private static void WriteXmlToFile(string xml, string fileName)
+            => File.WriteAllText($"../../../Results/{fileName}", xml);
 
         //09. Import Suppliers
         public static string ImportSuppliers(CarDealerContext context, string inputXml)
@@ -165,6 +177,84 @@ namespace CarDealer
 
 
             return $"Successfully imported {sales.Count}";
+        }
+
+        //14. Export Cars With Distance
+        public static string GetCarsWithDistance(CarDealerContext context)
+        {
+            var cars = context.Cars
+                .Where(c => c.TraveledDistance > 2000000)
+                .OrderBy(c => c.Make)
+                .ThenBy(c => c.Model)
+                .Take(10)
+                .ToArray();
+
+            var carDtos = cars
+                .Select(c => new CarWithDistanceDto
+                {
+                    Make = c.Make,
+                    Model = c.Model,
+                    TraveledDistance = c.TraveledDistance
+                })
+                .ToArray();
+
+
+            var namespaces = new XmlSerializerNamespaces();
+            namespaces.Add(string.Empty, null);
+
+            var serializer = new XmlSerializer(typeof(CarWithDistanceDto[]), new XmlRootAttribute("cars"));
+            using var writer = new StringWriter();
+            serializer.Serialize(writer, carDtos, namespaces);
+
+            return writer.ToString();
+        }
+
+        //15. Export Cars From Make BMW
+        public static string GetCarsFromMakeBmw(CarDealerContext context)
+        {
+            var bmwCars = context.Cars
+                .Where(c => c.Make == "BMW")
+                .OrderBy(c => c.Model)
+                .ThenByDescending(c => c.TraveledDistance)
+                .Select(c => new BmwCarDto
+                {
+                    Id = c.Id,
+                    Model = c.Model,
+                    TraveledDistance = c.TraveledDistance
+                })
+                .ToArray();
+
+            var namespaces = new XmlSerializerNamespaces();
+            namespaces.Add(string.Empty, null);
+            var serializer = new XmlSerializer(typeof(BmwCarDto[]), new XmlRootAttribute("cars"));
+            using var writer = new StringWriter();
+
+            serializer.Serialize (writer, bmwCars, namespaces);
+
+            return writer.ToString();
+        }
+
+        //16. Export Local Suppliers
+        public static string GetLocalSuppliers(CarDealerContext context)
+        {
+            var localSuppliers = context.Suppliers
+                .Where(s => !s.IsImporter)
+                .Select(s => new LocalSupplierDto
+                {
+                    Id= s.Id,
+                    Name = s.Name,
+                    Parts = s.Parts.Count
+                })
+                .ToArray();
+
+            var namespaces = new XmlSerializerNamespaces();
+            namespaces.Add(string.Empty, null);
+            var serializer = new XmlSerializer(typeof(LocalSupplierDto[]), new XmlRootAttribute("suppliers"));
+            using var writer = new StringWriter();
+            serializer.Serialize(writer, localSuppliers, namespaces);
+
+
+            return writer.ToString();
         }
 
     }
