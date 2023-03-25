@@ -1,11 +1,12 @@
 ﻿namespace Theatre.DataProcessor
 {
+    using System.Xml.Serialization;
+
     using Microsoft.EntityFrameworkCore;
     using Newtonsoft.Json;
-    using System;
+
     using Data;
-    using Theatre.DataProcessor.ExportDto;
-    using System.Xml.Serialization;
+    using DataProcessor.ExportDto;
 
     public class Serializer
     {
