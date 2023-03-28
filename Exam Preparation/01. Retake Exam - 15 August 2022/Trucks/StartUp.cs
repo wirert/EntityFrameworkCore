@@ -2,9 +2,7 @@
 {
     using System;
     using System.IO;
-    using System.Globalization;
 
-    using AutoMapper;
     using Microsoft.EntityFrameworkCore;
 
     using Data;
@@ -15,11 +13,11 @@
         {
             var context = new TrucksContext();
 
-            //ResetDatabase(context, shouldDropDatabase: false);
+            ResetDatabase(context, shouldDropDatabase: true);
 
             var projectDir = GetProjectDirectory();
 
-            //ImportEntities(context, projectDir + @"Datasets/", projectDir + @"ImportResults/");
+            ImportEntities(context, projectDir + @"Datasets/", projectDir + @"ImportResults/");
 
             ExportEntities(context, projectDir + @"ExportResults/");
 
@@ -50,10 +48,10 @@
             Console.WriteLine(ExportDespatchersWithTheirTrucks);
             File.WriteAllText(exportDir + "Actual Result - ExportDespatchersWithTheirTrucks.xml", ExportDespatchersWithTheirTrucks);
 
-            //int tankCapacity = 1000;
-            //var ExportClientsWithMostTrucks = DataProcessor.Serializer.ExportClientsWithMostTrucks(context, tankCapacity);
-            //Console.WriteLine(ExportClientsWithMostTrucks);
-            //File.WriteAllText(exportDir + "Actual Result - ExportClientsWithMostTrucks.json", ExportClientsWithMostTrucks);
+            int tankCapacity = 1000;
+            var ExportClientsWithMostTrucks = DataProcessor.Serializer.ExportClientsWithMostTrucks(context, tankCapacity);
+            Console.WriteLine(ExportClientsWithMostTrucks);
+            File.WriteAllText(exportDir + "Actual Result - ExportClientsWithMostTrucks.json", ExportClientsWithMostTrucks);
         }
 
         private static void ResetDatabase(TrucksContext context, bool shouldDropDatabase = false)

@@ -7,7 +7,7 @@
     [XmlType("Truck")]
     public class ImportTruckDto
     {
-        [StringLength(8)]
+        [StringLength(8, MinimumLength = 8)]
         [RegularExpression(@"[A-Z]{2}\d{4}[A-Z]{2}")]
         [Required]
         [XmlElement]
@@ -15,7 +15,7 @@
 
         [XmlElement]
         [Required]
-        [StringLength(17)]
+        [StringLength(17, MinimumLength = 17)]
         public string VinNumber { get; set; } = null!;
 
         [XmlElement]
@@ -28,7 +28,7 @@
 
         [XmlElement]
         [Required]
-        [Range(0, 3)]
+        [Range(CategoryType.GetValues().Min(), 3)]
         public int CategoryType { get; set; }
 
         [XmlElement]
