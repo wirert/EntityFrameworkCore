@@ -1,25 +1,26 @@
-﻿namespace BookShop
+﻿namespace SoftJail
 {
     using System;
     using System.IO;
 
+    using AutoMapper;
     using Microsoft.EntityFrameworkCore;
 
     using Data;
-    using System.Globalization;
 
     public class StartUp
     {
         public static void Main(string[] args)
         {
-            var context = new BookShopContext();
+            var context = new SoftJailDbContext();
+
+            Mapper.Initialize(config => config.AddProfile<SoftJailProfile>());
 
             ResetDatabase(context, shouldDropDatabase: true);
 
             var projectDir = GetProjectDirectory();
 
             ImportEntities(context, projectDir + @"Datasets/", projectDir + @"ImportResults/");
-
             ExportEntities(context, projectDir + @"ExportResults/");
 
             using (var transaction = context.Database.BeginTransaction())
@@ -28,36 +29,33 @@
             }
         }
 
-        private static void ImportEntities(BookShopContext context, string baseDir, string exportDir)
+        private static void ImportEntities(SoftJailDbContext context, string baseDir, string exportDir)
         {
-            var projects =
-                DataProcessor.Deserializer.ImportBooks(context,
-                    File.ReadAllText(baseDir + "books.xml"));
+            var departmentsCells =
+                DataProcessor.Deserializer.ImportDepartmentsCells(context,
+                    File.ReadAllText(baseDir + "ImportDepartmentsCells.json"));
+            PrintAndExportEntityToFile(departmentsCells, exportDir + "ImportDepartmentsCells.txt");
 
-            PrintAndExportEntityToFile(projects, exportDir + "Actual Result - ImportBooks.txt");
+            var prisonersMails =
+                DataProcessor.Deserializer.ImportPrisonersMails(context,
+                    File.ReadAllText(baseDir + "ImportPrisonersMails.json"));
+            PrintAndExportEntityToFile(prisonersMails, exportDir + "ImportPrisonersMails.txt");
 
-            var employees =
-             DataProcessor.Deserializer.ImportAuthors(context,
-                 File.ReadAllText(baseDir + "authors.json"));
-
-            PrintAndExportEntityToFile(employees, exportDir + "Actual Result - ImportAuthors.txt");
+            var officersPrisoners = DataProcessor.Deserializer.ImportOfficersPrisoners(context, File.ReadAllText(baseDir + "ImportOfficersPrisoners.xml"));
+            PrintAndExportEntityToFile(officersPrisoners, exportDir + "ImportOfficersPrisoners.txt");
         }
 
-        private static void ExportEntities(BookShopContext context, string exportDir)
+        private static void ExportEntities(SoftJailDbContext context, string exportDir)
         {
+            var jsonOutput = DataProcessor.Serializer.ExportPrisonersByCells(context, new[] { 1, 5, 7, 3 });
+            Console.WriteLine(jsonOutput);
+            File.WriteAllText(exportDir + "PrisonersByCells.json", jsonOutput);
 
-            var exportProcrastinatedProjects = DataProcessor.Serializer.ExportMostCraziestAuthors(context);
-            Console.WriteLine(exportProcrastinatedProjects);
-            File.WriteAllText(exportDir + "Actual Result - ExportMostCraziestAuthors.json", exportProcrastinatedProjects);
-
-            DateTime dateTime = DateTime.ParseExact("25/01/2017", "dd/MM/yyyy", CultureInfo.InvariantCulture);
-
-            var exportTopMovies = DataProcessor.Serializer.ExportOldestBooks(context, dateTime);
-            Console.WriteLine(exportTopMovies);
-            File.WriteAllText(exportDir + "Actual Result - ExportOldestBooks.xml", exportTopMovies);
+            var xmlOutput = DataProcessor.Serializer.ExportPrisonersInbox(context, "Melanie Simonich,Diana Ebbs,Binni Cornhill");
+            Console.WriteLine(xmlOutput);
+            File.WriteAllText(exportDir + "PrisonersInbox.xml", xmlOutput);
         }
-
-        private static void ResetDatabase(BookShopContext context, bool shouldDropDatabase = false)
+        private static void ResetDatabase(SoftJailDbContext context, bool shouldDropDatabase = false)
         {
             if (shouldDropDatabase)
             {
