@@ -1,26 +1,21 @@
-﻿namespace SoftJail
+﻿namespace Boardgames
 {
-    using System;
-    using System.IO;
-
-    using AutoMapper;
     using Microsoft.EntityFrameworkCore;
 
-    using Data;
+    using Boardgames.Data;
 
     public class StartUp
     {
-        public static void Main(string[] args)
+        public static void Main()
         {
-            var context = new SoftJailDbContext();
-
-            //Mapper.Initialize(config => config.AddProfile<SoftJailProfile>());
+            var context = new BoardgamesContext();
 
             ResetDatabase(context, shouldDropDatabase: true);
 
             var projectDir = GetProjectDirectory();
 
             ImportEntities(context, projectDir + @"Datasets/", projectDir + @"ImportResults/");
+
             ExportEntities(context, projectDir + @"ExportResults/");
 
             using (var transaction = context.Database.BeginTransaction())
@@ -29,33 +24,35 @@
             }
         }
 
-        private static void ImportEntities(SoftJailDbContext context, string baseDir, string exportDir)
+        private static void ImportEntities(BoardgamesContext context, string baseDir, string exportDir)
         {
-            var departmentsCells =
-                DataProcessor.Deserializer.ImportDepartmentsCells(context,
-                    File.ReadAllText(baseDir + "ImportDepartmentsCells.json"));
-            PrintAndExportEntityToFile(departmentsCells, exportDir + "ImportDepartmentsCells.txt");
+            var creators =
+                DataProcessor.Deserializer.ImportCreators(context,
+                    File.ReadAllText(baseDir + "creators.xml"));
 
-            var prisonersMails =
-                DataProcessor.Deserializer.ImportPrisonersMails(context,
-                    File.ReadAllText(baseDir + "ImportPrisonersMails.json"));
-            PrintAndExportEntityToFile(prisonersMails, exportDir + "ImportPrisonersMails.txt");
+            PrintAndExportEntityToFile(creators, exportDir + "Actual Result - ImportCreators.txt");
 
-            var officersPrisoners = DataProcessor.Deserializer.ImportOfficersPrisoners(context, File.ReadAllText(baseDir + "ImportOfficersPrisoners.xml"));
-            PrintAndExportEntityToFile(officersPrisoners, exportDir + "ImportOfficersPrisoners.txt");
+            var sellers =
+             DataProcessor.Deserializer.ImportSellers(context,
+                 File.ReadAllText(baseDir + "sellers.json"));
+
+            PrintAndExportEntityToFile(sellers, exportDir + "Actual Result - ImportSellers.txt");
         }
 
-        private static void ExportEntities(SoftJailDbContext context, string exportDir)
+        private static void ExportEntities(BoardgamesContext context, string exportDir)
         {
-            var jsonOutput = DataProcessor.Serializer.ExportPrisonersByCells(context, new[] { 1, 5, 7, 3 });
-            Console.WriteLine(jsonOutput);
-            File.WriteAllText(exportDir + "PrisonersByCells.json", jsonOutput);
+            var exportCreatorsWithTheirBoardgames = DataProcessor.Serializer.ExportCreatorsWithTheirBoardgames(context);
+            Console.WriteLine(exportCreatorsWithTheirBoardgames);
+            File.WriteAllText(exportDir + "Actual Result - ExportCreatorsWithTheirBoardgames.xml", exportCreatorsWithTheirBoardgames);
 
-            var xmlOutput = DataProcessor.Serializer.ExportPrisonersInbox(context, "Melanie Simonich,Diana Ebbs,Binni Cornhill");
-            Console.WriteLine(xmlOutput);
-            File.WriteAllText(exportDir + "PrisonersInbox.xml", xmlOutput);
+            var year = 2021;
+            double rating = 9.50;
+            var exportSellersWithMostBoardgames = DataProcessor.Serializer.ExportSellersWithMostBoardgames(context, year, rating);
+            Console.WriteLine(exportSellersWithMostBoardgames);
+            File.WriteAllText(exportDir + "Actual Result - ExportSellersWithMostBoardgames.json", exportSellersWithMostBoardgames);
         }
-        private static void ResetDatabase(SoftJailDbContext context, bool shouldDropDatabase = false)
+
+        private static void ResetDatabase(BoardgamesContext context, bool shouldDropDatabase = false)
         {
             if (shouldDropDatabase)
             {
@@ -92,7 +89,7 @@
         {
             var currentDirectory = Directory.GetCurrentDirectory();
             var directoryName = Path.GetFileName(currentDirectory);
-            var relativePath = directoryName.StartsWith("netcoreapp") ? @"../../../" : string.Empty;
+            var relativePath = directoryName.StartsWith("net6.0") ? @"../../../" : string.Empty;
 
             return relativePath;
         }
